@@ -6,7 +6,8 @@ services:
     environment:
       POSTGRES_DB: api_dashboard
       POSTGRES_USER: dashboard
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-demo1234}
+      POSTGRES_PASSWORD: demo1234
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
