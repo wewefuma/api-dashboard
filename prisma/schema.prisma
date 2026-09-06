@@ -6,3 +6,42 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model ApiProvider {
+  id            String   @id @default(cuid())
+  name          String
+  baseUrl       String
+  statusPageUrl String?
+  pricingRules  Json     // { "/v1/chat/completions": { "POST": { costPerRequest: 0.03, unit: "1k tokens" } } }
+  rateLimitRules Json?   // { header: "X-RateLimit-Remaining", quota: 1000, window: "minute" }
+  createdAt     DateTime @default(now())
+  calls         ApiCall[]
+  alertRules    AlertRule[]
+}
+
+model ApiCall {
+  id                String   @id @default(cuid())
+  providerId        String
+  provider          ApiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  endpoint          String
+  method            String
+  statusCode        Int
+  latencyMs         Int
+  rateLimitRemaining Int?
+  estimatedCost     Float    @default(0)
+  projectTag        String   @default("dev")
+  timestamp         DateTime @default(now())
+}
+
+model AlertRule {
+  id                  String   @id @default(cuid())
+  providerId          String
+  provider            ApiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  metricType          String   // "cost" | "rate_limit" | "errors" | "latency" | "downtime"
+  threshold           Float
+  window              String   // "1h" | "24h" | "7d"
+  notificationChannel String   // "slack" | "email" | "discord"
+  webhookUrl          String?
+  enabled             Boolean  @default(true)
+  createdAt           DateTime @default(now())
+}
